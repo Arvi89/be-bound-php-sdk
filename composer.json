@@ -1,0 +1,13 @@
+{
+    "name": "be-bound/sdk-php",
+    "description": "Be-Bound sdk",
+    "type": "library",
+    "require": {
+        "psr/log": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
