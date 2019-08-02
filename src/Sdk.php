@@ -1,11 +1,11 @@
 <?php
 
-namespace App\BeBound;
+namespace BeBound;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-class BeBound
+class Sdk
 {
     private $id = null;
     private $secret = null;
@@ -32,7 +32,7 @@ class BeBound
     }
 
     /**
-     * @return BeBound
+     * @return Sdk
      * @throws BeBoundException
      */
     public function init(): self
@@ -136,7 +136,7 @@ class BeBound
 
     /**
      * @param string $message
-     * @return BeBound
+     * @return Sdk
      */
     public function setMessage(string $message): self
     {

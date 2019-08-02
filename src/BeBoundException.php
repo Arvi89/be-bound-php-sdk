@@ -1,6 +1,6 @@
 <?php
 
-namespace App\BeBound;
+namespace BeBound;
 
 class BeBoundException extends \Exception
 {
