@@ -13,7 +13,6 @@ class BeBound
     private $data = array();
     private $logger;
     private $authenticated = false;
-    private $error = '';
     private $beBound = false;
     private $headers = array();
     const PUSH_URL = 'https://africa-bbml.be-bound.com/';
@@ -79,7 +78,7 @@ class BeBound
      * @param string $message
      * @param string $deviceId
      * @param array $data
-     * @throws \Exception
+     * @throws BeBoundException
      */
     public function push(string $message, string $deviceId, array $data): void
     {
@@ -109,22 +108,6 @@ class BeBound
     public function isAuthenticated(): bool
     {
         return $this->authenticated;
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasError(): bool
-    {
-        return !empty($this->error);
-    }
-
-    /**
-     * @return string
-     */
-    public function getError(): string
-    {
-        return $this->error;
     }
 
     /**
