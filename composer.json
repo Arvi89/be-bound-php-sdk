@@ -9,7 +9,7 @@
     },
     "autoload": {
         "psr-4": {
-            "BeBound": "src/"
+            "BeBound\\": "src/"
         }
     }
 }
