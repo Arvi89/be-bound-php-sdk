@@ -64,10 +64,10 @@ class Sdk
             $authPassword = $_SERVER['PHP_AUTH_PW'];
 
             if (
-                $authPassword === $this->secret
-                && $authUser === $this->id
+                !($authPassword === $this->secret
+                    && $authUser === $this->id)
             ) {
-                $this->authenticated = true;
+                throw new BeBoundException('Wrong be-app id or be-app secret');
             }
         }
 
