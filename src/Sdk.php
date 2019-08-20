@@ -87,7 +87,7 @@ class Sdk
         $headers = array();
         foreach ($_SERVER as $name => $value) {
             if (\strpos($name, 'HTTP_') === 0) {
-                $key = \str_replace(' ', '-', \ucwords(\strtolower(\str_replace('_', ' ', \substr($name, 5)))));
+                $key = \str_replace(' ', '-', \strtolower(\str_replace('_', ' ', \substr($name, 5))));
                 $headers[$key] = $value;
             }
         }
