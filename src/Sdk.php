@@ -39,19 +39,19 @@ class Sdk
     {
         $this->data = \json_decode(\file_get_contents('php://input'), true);
 
-        if (!(is_array($this->data) && \JSON_ERROR_NONE === \json_last_error())) {
-            $this->logger->error('Json not valid');
+        if (!(\is_array($this->data) && \JSON_ERROR_NONE === \json_last_error())) {
+            $this->logger->info('Json not valid');
 
             return $this;
         }
 
         $this->logger->debug('content of json: ' . \json_encode($this->data));
 
-        $headers = \getallheaders();
+        $headers = $this->getAllHeaders();
 
         if (isset($headers['beapp-message'])) {
             $this->beBound = true;
-            if ((int)$this->version !== (int)(isset($headers['beapp-version']) ? $headers['beapp-version'] : 0)) {
+            if ((int)$this->version !== (int)($headers['beapp-version'] ?? 0)) {
                 throw new BeBoundException('Wrong be-app version');
             }
 
@@ -72,6 +72,26 @@ class Sdk
         }
 
         return $this;
+    }
+
+    /**
+     * \getallheaders() only works with apache, this also works with nginx
+     * @return array
+     */
+    private function getAllHeaders(): array
+    {
+        if (!\is_array($_SERVER)) {
+            return array();
+        }
+
+        $headers = array();
+        foreach ($_SERVER as $name => $value) {
+            if (\strpos($name, 'HTTP_') === 0) {
+                $key = \str_replace(' ', '-', \ucwords(\strtolower(\str_replace('_', ' ', \substr($name, 5)))));
+                $headers[$key] = $value;
+            }
+        }
+        return $headers;
     }
 
     /**
@@ -145,6 +165,9 @@ class Sdk
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getData(): array
     {
         return $this->data;
