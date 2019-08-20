@@ -102,14 +102,17 @@ class Sdk
      */
     public function push(string $message, string $deviceId, array $data): void
     {
-        $this->headers['device-id'] = $deviceId;
-        $this->headers['Beapp-Version'] = (int)$this->version;
-        $this->setMessage($message);
+        $headers = array(
+            'device-id' => $deviceId,
+            'beapp-version' => (int)$this->version,
+            'beapp-message' => $message,
+            'Content-Type' => 'application/json',
+        );
         try {
             $curl = \curl_init();
             \curl_setopt($curl, CURLOPT_POST, 1);
             \curl_setopt($curl, CURLOPT_POSTFIELDS, \json_encode($data));
-            \curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            \curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
             \curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
             \curl_setopt($curl, CURLOPT_USERPWD, $this->id . ':' . $this->secret);
             \curl_setopt($curl, CURLOPT_URL, self::PUSH_URL);
@@ -120,14 +123,6 @@ class Sdk
             $this->logger->error($e->getMessage());
             throw new BeBoundException('Error while pushing: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * @return bool
-     */
-    public function isAuthenticated(): bool
-    {
-        return $this->authenticated;
     }
 
     /**
@@ -152,17 +147,6 @@ class Sdk
     public function getMessage(): string
     {
         return $this->headers['beapp-message'] ?? '';
-    }
-
-    /**
-     * @param string $message
-     * @return Sdk
-     */
-    public function setMessage(string $message): self
-    {
-        $this->headers['beapp-message'] = $message;
-
-        return $this;
     }
 
     /**
