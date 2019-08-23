@@ -10,9 +10,9 @@ class Sdk
     private $id = null;
     private $secret = null;
     private $version = null;
+    private $auth = true;
     private $data = array();
     private $logger;
-    private $authenticated = false;
     private $beBound = false;
     private $headers = array();
     const PUSH_URL = 'https://africa-bbml.be-bound.com/';
@@ -24,6 +24,7 @@ class Sdk
                 case 'id':
                 case 'secret':
                 case 'version':
+                case 'auth':
                     $this->$key = $variable;
                     break;
             }
@@ -63,7 +64,7 @@ class Sdk
             $authUser = $_SERVER['PHP_AUTH_USER'];
             $authPassword = $_SERVER['PHP_AUTH_PW'];
 
-            if (
+            if ( $this->auth !== false &&
                 !($authPassword === $this->secret
                     && $authUser === $this->id)
             ) {
