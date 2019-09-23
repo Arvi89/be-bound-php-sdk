@@ -7,29 +7,58 @@ use Psr\Log\NullLogger;
 
 class Sdk
 {
+    const PUSH_URL = 'https://africa-bbml.be-bound.com/';
+
     private $id = null;
     private $secret = null;
-    private $version = null;
+    private $version = array();
     private $auth = true;
     private $data = array();
     private $logger;
     private $beBound = false;
     private $headers = array();
-    const PUSH_URL = 'https://africa-bbml.be-bound.com/';
 
+    /**
+     * Sdk constructor.
+     * @param array $variables
+     * @param LoggerInterface|null $logger
+     * @throws BeBoundException
+     */
     public function __construct(array $variables, LoggerInterface $logger = null)
     {
+        $this->logger = $logger ?? new NullLogger();
         foreach ($variables as $key => $variable) {
             switch ($key) {
-                case 'id':
-                case 'secret':
                 case 'version':
+                    if (!\is_array($variable)) {
+                        $variable = [$variable];
+                    }
+                    \array_map(static function ($value) {
+                        return (int)$value;
+                    }, $variable);
+
+                    $this->$key = $variable;
+                    break;
+                case 'secret':
+                case 'id':
                 case 'auth':
                     $this->$key = $variable;
                     break;
+                default:
+                    $this->logger->error("$key is not a valid parameter as a Be-Bound sdk parameter");
+                    throw new BeBoundException("$key is not a valid parameter");
+                    break;
             }
         }
-        $this->logger = $logger ?? new NullLogger();
+        if (empty($this->version)) {
+            throw new BeBoundException('You need to set a least 1 version');
+        }
+        if (null === $this->secret) {
+            throw new BeBoundException('You need to set a secret');
+        }
+        if (null === $this->id) {
+            throw new BeBoundException('You need to set your beApp id');
+        }
     }
 
     /**
@@ -59,20 +88,38 @@ class Sdk
             $this->headers['beapp-version'] = $headers['beapp-version'];
             $this->headers['beapp-message'] = $headers['beapp-message'];
             $this->headers['device-id'] = $headers['device-id'];
-            $this->headers['authorization'] = $headers['authorization'];
+//            $this->headers['authorization'] = $headers['authorization'];
 
-            $authUser = $_SERVER['PHP_AUTH_USER'];
-            $authPassword = $_SERVER['PHP_AUTH_PW'];
-
-            if ( $this->auth !== false &&
-                !($authPassword === $this->secret
-                    && $authUser === $this->id)
+            if ($this->auth !== false && !$this->isAuthenticated()
             ) {
                 throw new BeBoundException('Wrong be-app id or be-app secret');
             }
         }
 
         return $this;
+    }
+
+    /**
+     * @param string|null $newSecret
+     * @return bool
+     */
+    private function isAuthenticated(string $newSecret = null): bool
+    {
+        $authUser = $_SERVER['PHP_AUTH_USER'];
+        $authPassword = $_SERVER['PHP_AUTH_PW'];
+
+        return $this->id === $authUser && ($authPassword === ($newSecret ?? $this->secret));
+    }
+
+    /**
+     * @param string $secret
+     * @throws BeBoundException
+     */
+    public function auth(string $secret): void
+    {
+        if (!$this->isAuthenticated($secret)) {
+            throw new BeBoundException('Wrong be-app id or be-app secret');
+        }
     }
 
     /**
@@ -92,6 +139,7 @@ class Sdk
                 $headers[$key] = $value;
             }
         }
+
         return $headers;
     }
 
@@ -99,15 +147,16 @@ class Sdk
      * @param string $message
      * @param string $deviceId
      * @param array $data
+     * @param string $secret
      * @throws BeBoundException
      */
-    public function push(string $message, string $deviceId, array $data): void
+    public function push(string $message, string $deviceId, array $data, ?string $secret = null): void
     {
         $headers = array(
-            'device-id' => $deviceId,
+            'device-id'     => $deviceId,
             'beapp-version' => (int)$this->version,
             'beapp-message' => $message,
-            'Content-Type' => 'application/json',
+            'Content-Type'  => 'application/json',
         );
         try {
             $curl = \curl_init();
@@ -115,7 +164,7 @@ class Sdk
             \curl_setopt($curl, CURLOPT_POSTFIELDS, \json_encode($data));
             \curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
             \curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-            \curl_setopt($curl, CURLOPT_USERPWD, $this->id . ':' . $this->secret);
+            \curl_setopt($curl, CURLOPT_USERPWD, $this->id . ':' . $secret ?? $this->secret);
             \curl_setopt($curl, CURLOPT_URL, self::PUSH_URL);
             \curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
             \curl_exec($curl);
@@ -156,5 +205,10 @@ class Sdk
     public function getData(): array
     {
         return $this->data;
+    }
+
+    public function getVersion(): int
+    {
+        return (int)$this->headers['beapp-version'];
     }
 }
