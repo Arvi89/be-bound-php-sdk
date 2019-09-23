@@ -150,7 +150,7 @@ class Sdk
      * @param string $secret
      * @throws BeBoundException
      */
-    public function push(string $message, string $deviceId, array $data, ?string $secret = null): void
+    public function push(string $message, string $deviceId, array $data, string $secret = null)
     {
         $headers = array(
             'device-id'     => $deviceId,
